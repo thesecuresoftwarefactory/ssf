@@ -8,6 +8,67 @@ import (
 	triggersV1Beta1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1"
 )
 
+// FRSCA Configuration
+frscaConfig: {
+  arch: string // untransformed architecture string
+  archSed: string // transformed architecture string (e.g. x86_64 -> amd64)
+  platform: string // untransformed platform string
+  platformLower: string // lowercase platform string
+	cosign: {
+		imageBase: string | *"gcr.io/projectsigstore/cosign"
+		versionNumber: string | *"2.0.0"
+		imageDigest: string | *"sha256:728944a9542a7235b4358c4ab2bcea855840e9d4b9594febca5c2207f5da7f38"
+		releaseUrl: string | *"https://github.com/sigstore/cosign/releases/download/\(version)"
+		checksumsFileName: string | *"cosign_checksums.txt"
+		checksumsAsset: "\(releaseUrl)/\(checksumsFileName)"
+		version: "v\(versionNumber)"
+		imageUrl: "\(imageBase):\(version)@\(imageDigest)"
+    _arch: archSed
+    fileName: "cosign-\(platformLower)-\(_arch)"
+    asset: "\(releaseUrl)/\(fileName)"
+	}
+	helm: {
+		version: string | *"v3.7.1"
+		releaseUrl: string | *"https://get.helm.sh"
+    _arch: archSed
+		dir: "\(platformLower)-\(_arch)"
+    fileName: "helm-\(version)-\(dir).tar.gz"
+    asset: "\(releaseUrl)/\(fileName)"
+	}
+	kubectl: {
+		version: string | *"v1.27.1"
+		releaseUrl: string | *"https://dl.k8s.io/release/\(version)"
+    _arch: archSed
+		asset: "\(releaseUrl)/bin/\(platformLower)/\(_arch)/kubectl"
+		checksumUrl: "\(asset).sha256"
+	}
+	minikube: {
+		version: string | *"v1.30.1"
+		releaseUrl: string | *"https://github.com/kubernetes/minikube/releases/download/\(version)"
+    _arch: archSed
+		fileName: "minikube-\(platformLower)-\(_arch)"
+		asset: "\(releaseUrl)/\(fileName)"
+	}
+	tektonCli: {
+		versionNumber: string | *"0.30.0"
+		version: "v\(versionNumber)"
+		releaseUrl: string | *"https://github.com/tektoncd/cli/releases/download/\(version)"
+		_arch: arch
+		fileName: "tkn_\(versionNumber)_\(platform)_\(_arch).tar.gz"
+		asset: "\(releaseUrl)/\(fileName)"
+		checksums: "checksums.txt"
+	}
+  crane: {
+    versionNumber: string | *"0.13.0"
+    version: "v\(versionNumber)"
+    releaseUrl: string | *"https://github.com/google/go-containerregistry/releases/download/\(version)"
+    _arch: arch
+    fileName: "go-containerregistry_\(platform)_\(_arch).tar.gz"
+		asset: "\(releaseUrl)/\(fileName)"
+    checksums: "checksums.txt"
+  }
+}
+
 frsca: configMap?: [Name=_]: k8sCoreV1.#ConfigMap & {
 	apiVersion: "v1"
 	kind:       "ConfigMap"
